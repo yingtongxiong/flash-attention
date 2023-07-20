@@ -178,7 +178,7 @@ void run_mha_bwd_hdim32(Flash_bwd_params &params, cudaStream_t stream, const boo
         &max_smem_per_block, cudaDevAttrMaxSharedMemoryPerBlockOptin, device);
     BOOL_SWITCH(params.p_dropout < 1.f, Is_dropout, [&] {
         if (max_smem_per_block >= 2 * ((3 * 128 + 2 * 128) * Headdim + 2 * 128 * 128)) { // 104 KB
-            if constexpr(!Is_dropout) {  // We can afford more registers to keep V in registers
+            if (!Is_dropout) {  // We can afford more registers to keep V in registers
                 run_flash_bwd<Flash_bwd_kernel_traits<Headdim, 128, 128, 8, 4, 4, 4, true, false, T>, Is_dropout>(params, stream, configure);
             } else {
                 run_flash_bwd<Flash_bwd_kernel_traits<Headdim, 128, 128, 8, 4, 4, 4, false, false, T>, Is_dropout>(params, stream, configure);
@@ -244,7 +244,7 @@ void run_mha_bwd_hdim96(Flash_bwd_params &params, cudaStream_t stream, const boo
     BOOL_SWITCH(params.p_dropout < 1.f, Is_dropout, [&] {
         // if (params.h == params.h_k) {
             if (max_smem_per_block >= 116 * 1024) {
-                if constexpr(!Is_dropout) {  // 92KB
+                if (!Is_dropout) {  // 92KB
                     run_flash_bwd<Flash_bwd_kernel_traits<Headdim, 64, 128, 8, 2, 4, 4, true, false, T>, Is_dropout>(params, stream, configure);
                 } else {  // 116 KB
                     // This is faster for dropout since we don't have many registers to spare
